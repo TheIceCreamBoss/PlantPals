@@ -1,28 +1,24 @@
 from flask import Flask, request
-import json
-
+from temperature_sensor import get_temp
 
 app = Flask(__name__)
 
 @app.route('/post', methods = ["POST"])
 
-
-#def read_temp_raw():
-
-
-#!!! Call read_temp() in post()
-#def read_temp():
-
 def post():
 
 	#Data is posted via json
-	with open('data.json', 'r') as file:
-		data = json.load(file)
-	print("soil-moisture:" + data['soil-moisture'])
-	print("lux:" + data['lux']) 
-	print("temperature: goes here!")
+	data = request.get_json()
+	soil_moisture = data.get('soil-moisture', 'No data')
+	lux = data.get('lux', 'No data')
 
-	file.close()
+	#Data received from local sensor
+	temp = get_temp()
+
+	print(f"soil-moisture: {soil_moisture}")
+	print(f"lux: {lux}")
+	print(f"temp: {temp}")
+
 	return ""
 
 app.run(debug=True, host='0.0.0.0', port = 4000)
