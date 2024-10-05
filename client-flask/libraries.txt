@@ -1,0 +1,6 @@
+#Libraries to Install on Arduino ArduinoIDE
+##Network
+- ArduinoHTTPClient
+##Light Sensor
+- Adafruit VEML7700 Library
+- Adafruit BusIO
