@@ -41,7 +41,14 @@
           "photosPermission": "The app accesses your photos to let you share them with your friends."
         }
       ],
-      "expo-router"
+      "expo-router",
+      [
+        "expo-font",
+        {
+          "fonts": ["PlantPals/assets/fonts/Mooli-Regular.ttf"]
+        }
+      ]
+      
     ],
     "experiments": {
       "typedRoutes": true
