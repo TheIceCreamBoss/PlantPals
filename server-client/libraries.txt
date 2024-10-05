@@ -1,0 +1,6 @@
+#Libraries required in ArduinoIDE:
+##Network
+- ArduinoHTTPClient
+##Light Sensor
+- Adafruit BusIO
+= Adafruit VEML7700 Library
