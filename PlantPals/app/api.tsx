@@ -1,183 +1,215 @@
 import { useState, useEffect } from 'react';
-import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
+import { TextInput } from 'react-native-gesture-handler';
 
 export default function Camera() {
-    const params = useLocalSearchParams<{token?: string}>();
-    const [response, setResponse] = useState<any>(null); // State to store the API response
-    const [loading, setLoading] = useState(true); // State to manage loading
+  const params = useLocalSearchParams<{ token?: string }>();
+  const [response, setResponse] = useState<any>(null); // State to store the API response
+  const [loading, setLoading] = useState(true); // State to manage loading
+  const [plantName, setPlantName] = useState(''); // State for TextInput
 
-    SplashScreen.preventAutoHideAsync();
-    const [loaded, error] = useFonts({
-        'Mooli-Regular': require('@/assets/fonts/Mooli-Regular.ttf'),
-    });
-    useEffect(() => {
-        getInfo(); // Fetch data on component mount
-        if (loaded || error) {
-            SplashScreen.hideAsync();
+  SplashScreen.preventAutoHideAsync();
+  const [loaded, error] = useFonts({
+    'Mooli-Regular': require('@/assets/fonts/Mooli-Regular.ttf'),
+  });
+
+  useEffect(() => {
+    getInfo(); // Fetch data on component mount
+    if (loaded || error) {
+      SplashScreen.hideAsync();
+    }
+  }, []);
+
+  if (!loaded && !error) {
+    return null;
+  }
+
+  async function getInfo() {
+    try {
+      let res = await fetch(
+        `https://plant.id/api/v3/identification/${params.token}`,
+        {
+          method: 'GET',
+          headers: {
+            'Api-Key': process.env.EXPO_PUBLIC_API_KEY,
+            'Content-Type': 'application/json',
+          },
         }
-    }, []);
-
-    if (!loaded && !error) {
-        return null;
+      );
+      const jsonResponse = await res.json(); // Parse response as JSON
+      setResponse(jsonResponse); // Save response to state
+      setLoading(false);
+    } catch (error) {
+      console.error(error);
     }
+  }
 
-    async function getInfo() {
-        try {
-            let res = await fetch(`https://plant.id/api/v3/identification/${params.token}`, {
-                method: 'GET',
-                headers: {
-                'Api-Key': process.env.EXPO_PUBLIC_API_KEY,
-                'Content-Type': 'application/json',
-                }
-            });
-            const jsonResponse = await res.json(); // Parse response as JSON
-            setResponse(jsonResponse); // Save response to state
-            setLoading(false);
-        } catch (error) {
-            console.error(error);
-        }
-    }
+  function handleSubmit() {
+    // Handle the submission of plantName
+    console.log('Submitted plant name:', plantName);
+    // Perform necessary action, e.g., send to API or navigate
+    router.push(`/pickplant?token=${params.token}&name=${encodeURIComponent(plantName)}`);
+  }
 
-    if (loading) {
-        return (
-            <View style={styles.container}>
-                <Text>Loading...</Text>
-            </View>
-        );
-    }
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
-    if (!response || !response.input || !response.input.images || !response.input.images[0]) {
-        return (
+  if (
+    !response ||
+    !response.input ||
+    !response.input.images ||
+    !response.input.images[0]
+  ) {
+    return (
+      <View style={styles.container}>
+        <Text>No Image Found.</Text>
+      </View>
+    );
+  } else {
+    return (
+      <SafeAreaView style={{ flex: 1 }}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        >
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+          >
             <View style={styles.container}>
-                <Text>No Image Found.</Text>
-            </View>
-        );
-    } else {
-        return (
-            <View style={styles.container}>
-                <View style={styles.top_container}>
-                    <Image source={{uri: response.input.images[0]}} style={styles.tinyLogo} />
-                    <Text style={styles.main_text}>{(Math.round(Number(response.result.is_plant.probability) * 1000) / 10).toString()}% Plant</Text>
+              <View style={styles.top_container}>
+                <Text style={styles.page_title}>Name your plant</Text>
+                <Text style={styles.main_text}>
+                  Your photo is{' '}
+                  {(
+                    Math.round(
+                      Number(response.result.is_plant.probability) * 1000
+                    ) / 10
+                  ).toString()}
+                  % a plant!
+                </Text>
+                <View style={styles.tinyLogo_background}>
+                  <Image
+                    source={{ uri: response.input.images[0] }}
+                    style={styles.tinyLogo}
+                  />
                 </View>
-                <View style={styles.bot_container}>
-                    <TouchableOpacity style={styles.result_container} onPress={()=>{
-                        router.push("")
-                    }}>
-                        <Text style={styles.prediction_text}>{(Math.round(Number(response.result.classification.suggestions[0].probability) * 1000) / 10).toString()}%</Text>
-                        <Image source={{uri: response.result.classification.suggestions[0].similar_images[0].url}} style={styles.prob_img}/>
-                        <Text style={styles.prob_text}>{response.result.classification.suggestions[0].name}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.result_container} onPress={()=>{
-                        router.push("")
-                    }}>
-                        <Text style={styles.prediction_text}>{(Math.round(Number(response.result.classification.suggestions[1].probability) * 1000) / 10).toString()}%</Text>
-                        <Image source={{uri: response.result.classification.suggestions[1].similar_images[0].url}} style={styles.prob_img}/>
-                        <Text style={styles.prob_text}>{response.result.classification.suggestions[1].name}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.result_container} onPress={()=>{
-                        router.push("")
-                    }}>
-                        <Text style={styles.prediction_text}>{(Math.round(Number(response.result.classification.suggestions[2].probability) * 1000) / 10).toString()}%</Text>
-                        <Image source={{uri: response.result.classification.suggestions[2].similar_images[0].url}} style={styles.prob_img}/>
-                        <Text style={styles.prob_text}>{response.result.classification.suggestions[2].name}</Text>
-                    </TouchableOpacity>
-                    <Pressable style={styles.buttonStyle} onPress={()=>{
-                    // router.push('/camera')
-                    router.push("/api?token=FdTMsbUKfMvfO4Y")
-                    }}>
-                    <Text style={styles.buttonText}>None of the Above</Text>
-                    </Pressable>
+              </View>
+              <View style={styles.bot_container}>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.prediction_text}
+                    placeholder="Enter plant name here"
+                    value={plantName}
+                    onChangeText={setPlantName}
+                    onSubmitEditing={handleSubmit}
+                  />
                 </View>
+                <Pressable style={styles.buttonStyle} onPress={handleSubmit}>
+                  <Text style={styles.buttonText}>Select your species</Text>
+                </Pressable>
+              </View>
             </View>
-        );
-    }
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    );
+  }
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    backgroundColor: '#DFF6C2'
+    backgroundColor: '#DFF6C2',
+  },
+  page_title: {
+    fontSize: 35,
+    marginTop: 20,
+    fontFamily: 'Mooli-Regular'
   },
   top_container: {
-    flex: 3,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignSelf: 'stretch',
-    margin: 10,
+    flexGrow: 0.5,
     alignItems: 'center',
-    backgroundColor: 'red',
     borderRadius: 30,
+    margin: 10,
+    padding: 10,
+    justifyContent: 'center',
   },
   bot_container: {
-    flex: 6,
-    margin: 10,
-    alignSelf: 'stretch',
-    flexDirection: 'column',
+    alignItems: 'center',
+    marginHorizontal: 10,
+    marginTop: 5,
+    justifyContent: 'center',
+  },
+  tinyLogo_background: {
+    backgroundColor: '#F2FFE2',
+    borderRadius: 20,
+    padding: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    aspectRatio: 3 / 4,
+    overflow: 'hidden',
+    width: '90%',
   },
   tinyLogo: {
-    flex: 4,
-    width: 150,
-    height: 150,
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
     borderRadius: 20,
-    margin: 10
   },
-  prob_text: {
-    flex: 1.5,
-    color: "#111111",
-    textAlignVertical: "center",
-    textAlign: "center",
-    fontWeight: 'bold',
-    fontSize: 20
+  inputContainer: {
+    width: '80%',
+    borderRadius: 15,
+    overflow: 'hidden',
+    marginBottom: 10,
   },
   prediction_text: {
-    flex: 1,
-    color: "#111111",
-    textAlignVertical: "center",
-    textAlign: "center",
-    fontWeight: 'bold',
-    fontSize: 20
+    color: '#000000',
+    textAlign: 'center',
+    fontSize: 18,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 15,
+    fontFamily: 'Mooli-Regular'
   },
   main_text: {
-    flex: 5,
-    color: "#111111",
-    textAlignVertical: "center",
-    textAlign: "center",
-    fontWeight: 'bold',
-    fontSize: 30,
+    color: '#111111',
+    textAlign: 'center',
+    fontSize: 15,
+    paddingTop: 10,
+    bottom: 5,
+    fontFamily: 'Mooli-Regular'
   },
-  result_container: {
-    borderRadius: 30,
-    borderColor: "#AFC692",
-    flex: 1,
-    margin: 10,
-    marginTop: 15,
-    backgroundColor: '#BFD6A2',
-    flexDirection: 'row',
-    borderWidth: 2
+  buttonStyle: {
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 10,
+    alignItems: 'center',
+    backgroundColor: '#A1D65C',
   },
-  prob_img: {
-    width: 90,
-    height: 90,
-    borderRadius: 15,
-    justifyContent: 'center',
-    margin: 2
+  buttonText: {
+    fontSize: 25,
+    color: '#000000',
+    fontFamily: 'Mooli-Regular'
   },
-  buttonStyle:{
-    margin:40,
-    borderRadius:40,
-    alignItems:'center',
-    backgroundColor:"#A1D65C"
-  },
-  buttonText:{
-    fontSize:20,
-    padding:25
-  }
-
 });
