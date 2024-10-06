@@ -2,15 +2,28 @@ import { useState, useEffect } from 'react';
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
+import * as SplashScreen from 'expo-splash-screen';
+import { useFonts } from 'expo-font';
 
 export default function Camera() {
     const params = useLocalSearchParams<{token?: string}>();
     const [response, setResponse] = useState<any>(null); // State to store the API response
     const [loading, setLoading] = useState(true); // State to manage loading
 
+    SplashScreen.preventAutoHideAsync();
+    const [loaded, error] = useFonts({
+        'Mooli-Regular': require('@/assets/fonts/Mooli-Regular.ttf'),
+    });
     useEffect(() => {
         getInfo(); // Fetch data on component mount
+        if (loaded || error) {
+            SplashScreen.hideAsync();
+        }
     }, []);
+
+    if (!loaded && !error) {
+        return null;
+    }
 
     async function getInfo() {
         try {

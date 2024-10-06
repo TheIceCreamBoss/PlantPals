@@ -1,7 +1,27 @@
 import { Text, View, StyleSheet, Pressable } from "react-native";
 import { router } from 'expo-router';
 import HomePlant from '@/assets/images/homeplant.svg'
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import {useEffect} from 'react';
+
 export default function Index() {
+  SplashScreen.preventAutoHideAsync();
+  const [loaded, error] = useFonts({
+    'Mooli-Regular': require('@/assets/fonts/Mooli-Regular.ttf'),
+  });
+
+  useEffect(() => {
+    if (loaded || error) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded, error]);
+
+  if (!loaded && !error) {
+    return null;
+  }
+
+
   return (
     <View style={styles.background}>
       <View style={styles.content}>
@@ -51,7 +71,7 @@ const styles = StyleSheet.create({
     fontFamily:'Mooli-Regular'
   },
   textStyleSmaller:{
-    fontSize:20,
+    fontSize:16,
     paddingTop:40,
     paddingBottom:35,
     fontFamily:'Mooli-Regular'
@@ -64,6 +84,7 @@ const styles = StyleSheet.create({
   },
   buttonText:{
     fontSize:20,
-    padding:25
+    padding:25,
+    fontFamily:'Mooli-Regular'
   }
 })

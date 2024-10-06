@@ -1,14 +1,34 @@
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button, StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 import * as ImagePicker from 'expo-image-picker';
+import CameraButton from '@/assets/images/Circle.svg'
+import GalleryButton from '@/assets/images/photo.svg'
+import FlipButton from '@/assets/images/Vector.svg'
 
 
 export default function Camera() {
     const [facing, setFacing] = useState<CameraType>('back');
     const [permission, requestPermission] = useCameraPermissions();
     const cameraRef = useRef(null);
+
+    SplashScreen.preventAutoHideAsync();
+    const [loaded, error] = useFonts({
+        'Mooli-Regular': require('@/assets/fonts/Mooli-Regular.ttf'),
+    });
+
+    useEffect(() => {
+        if (loaded || error) {
+        SplashScreen.hideAsync();
+        }
+    }, [loaded, error]);
+
+    if (!loaded && !error) {
+        return null;
+    }
 
     if (!permission) {
         return <View/>;
@@ -83,13 +103,13 @@ export default function Camera() {
         <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
             <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.flip_button} onPress={toggleCameraFacing}>
-                <Text style={styles.text}>Flip</Text>
+                <FlipButton width={35} height={35}/>
             </TouchableOpacity>
             <TouchableOpacity style={styles.picture_button} onPress={takePicture}>
-                <Text style={styles.text}>Picture</Text>
+                <CameraButton width={80} height={80}/>
             </TouchableOpacity>
             <TouchableOpacity style={styles.gallery_button} onPress={pickImage}>
-                <Text style={styles.text}>Gallery</Text>
+                <GalleryButton width={35} height={35}/>
             </TouchableOpacity>
             </View>
         </CameraView>
@@ -114,11 +134,13 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         backgroundColor: "transparent",
         margin: 25,
+        marginBottom: 40
     },
     flip_button: {
         flex: 1,
         alignSelf: 'flex-end',
         alignItems: 'center',
+        marginBottom: 20
     },
     picture_button: {
         flex: 1,
@@ -129,10 +151,11 @@ const styles = StyleSheet.create({
         flex: 1,
         alignSelf: 'flex-end',
         alignItems: 'center',
+        marginBottom: 20
     },
     text: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: 'white',
+        color: 'white'
     },
 });
