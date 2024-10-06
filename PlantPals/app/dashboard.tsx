@@ -18,10 +18,24 @@ const PressableBubble = ({ icon, value }) => {
         </Pressable>
     )
 }
+async function getPiData() {
+    const url = "http://192.168.125.40:4000/get";
 
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Response status: ${response.status}`);
+    }
 
-const normalizeValue = (value, maxValue) => {
-    return Math.min(Math.max(value / maxValue, 0), 1);
+    const json = await response.json();
+    return json
+};
+
+const normalizeValue = (value, minValue, maxValue) => {
+    return (value - minValue) / (maxValue - minValue);
+};
+
+const normalizeValue2 = (value, maxValue) => {
+    return Math.abs((value - -4095) / (-(maxValue) - -4095))
 };
 export default function Dashboard() {
     const params = useLocalSearchParams<{ token?: string, plant?: string, name?: string }>();
@@ -29,7 +43,9 @@ export default function Dashboard() {
     const [date, setDate] = useState('')
     const bottomSheetRef = useRef(null)
     const [piValues, setPiValues] = useState({});
+    const [barValues, setBarValues] = useState({})
     const [isLoading, setLoading] = useState(true)
+
 
     SplashScreen.preventAutoHideAsync();
     const [loaded, error] = useFonts({
@@ -43,30 +59,20 @@ export default function Dashboard() {
     }, [loaded, error]);
 
     useEffect(() => {
-        if (piValues.lux || piValues.temperature || piValues.soil_moisture) {
-            const luxN = normalizeValue(piValues.lux, 1000);
-            const tempN = normalizeValue(piValues.temperature, 30);
-            const waterN = normalizeValue(piValues.soil_moisture, 3000);
-            setPiValues({ lux: luxN, soil_moisture: waterN, temperature: tempN });
-        }
-    }, []);
+        const interval = setInterval(async () => {
+            const result = await getPiData();
+            setPiValues({ lux: result.lux, temperature: result.temperature, soil_moisture: (-1 * result.soil_moisture) })
+            if (piValues.lux || piValues.temperature || piValues.soil_moisture) {
+                const luxN = normalizeValue(piValues.lux, 0, 5000);
+                const tempN = normalizeValue(piValues.temperature, 15, 30);
+                const waterN = normalizeValue2(piValues.soil_moisture, 1700);
+                setBarValues({ lux: luxN, soil_moisture: waterN, temperature: tempN });
+            }
+        }, 1500);
+        return () => clearInterval(interval);
+    }, [piValues]);
 
     useEffect(() => {
-        async function getPiData() {
-            const url = "http://192.168.125.40:4000/get";
-
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`Response status: ${response.status}`);
-            }
-
-            const json = await response.json();
-            setPiValues(json)
-            return json
-        };
-
-
-
         async function getInfo() {
             try {
                 let res = await fetch(`https://plant.id/api/v3/identification/${params.token}`, {
@@ -88,7 +94,8 @@ export default function Dashboard() {
         var year = new Date().getFullYear();
         var birthday = (date.toString()) + "/" + (month.toString()) + "/" + (year.toString());
         setDate(birthday);
-        getPiData();
+        const result = getPiData();
+        setPiValues({ lux: result.lux, temperature: result.temperature, soil_moisture: result.soil_moisutre })
         getInfo();
         setLoading(false);
     }, []);
@@ -113,17 +120,17 @@ export default function Dashboard() {
                     <View style={styles.barContainers}>
                         <View style={styles.barSection}>
                             <SunIcon width={40} height={40} />
-                            <Progress.Bar style={styles.barStyle} progress={piValues.lux} width={280} height={25} color={"#FFED4B"} borderRadius={10} borderWidth={0} unfilledColor='white' />
+                            <Progress.Bar style={styles.barStyle} progress={barValues.lux} width={280} height={25} color={"#FFED4B"} borderRadius={10} borderWidth={0} unfilledColor='white' />
                             <Text>{piValues.lux}</Text>
                         </View>
                         <View style={styles.barSection}>
                             <WaterIcon width={40} height={40} />
-                            <Progress.Bar style={styles.barStyle} progress={piValues.soil_moisture} width={280} height={25} color={"#68C0FF"} borderRadius={10} borderWidth={0} unfilledColor='white' />
+                            <Progress.Bar style={styles.barStyle} progress={barValues.soil_moisture} width={280} height={25} color={"#68C0FF"} borderRadius={10} borderWidth={0} unfilledColor='white' />
                             <Text>{piValues.soil_moisture}</Text>
                         </View>
                         <View style={styles.barSection}>
                             <TempIcon width={40} height={40} />
-                            <Progress.Bar style={styles.barStyle} progress={piValues.temperature} width={280} height={25} color={"red"} borderRadius={10} borderWidth={0} unfilledColor='white' />
+                            <Progress.Bar style={styles.barStyle} progress={barValues.temperature} width={280} height={25} color={"red"} borderRadius={10} borderWidth={0} unfilledColor='white' />
                             <Text>{piValues.temperature}</Text>
                         </View>
                     </View>
