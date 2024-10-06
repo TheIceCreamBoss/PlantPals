@@ -13,6 +13,7 @@ import FlipButton from '@/assets/images/Vector.svg'
 export default function Camera() {
     const [facing, setFacing] = useState<CameraType>('back');
     const [permission, requestPermission] = useCameraPermissions();
+    const [disabled, setDisabled] = useState(false);
     const cameraRef = useRef(null);
 
     SplashScreen.preventAutoHideAsync();
@@ -48,7 +49,8 @@ export default function Camera() {
     }
 
     async function takePicture() {
-        if (cameraRef.current) {
+        if (cameraRef.current && !disabled) {
+            setDisabled(true);
             const photo = await cameraRef.current.takePictureAsync({
                 allowsEditing: true,
                 quality: 1,
