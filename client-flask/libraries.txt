@@ -4,3 +4,5 @@
 ##Light Sensor
 - Adafruit VEML7700 Library
 - Adafruit BusIO
+##Misc
+- ArduinoJSON
