@@ -22,7 +22,7 @@ export default function Camera() {
 
     useEffect(() => {
         if (loaded || error) {
-        SplashScreen.hideAsync();
+            SplashScreen.hideAsync();
         }
     }, [loaded, error]);
 
@@ -31,15 +31,15 @@ export default function Camera() {
     }
 
     if (!permission) {
-        return <View/>;
+        return <View />;
     }
 
     if (!permission.granted) {
         return (
-        <View style={styles.container}>
-            <Text style={styles.message}>We need your permission to show the camera</Text>
-            <Button onPress={requestPermission} title="grant permission" />
-        </View>
+            <View style={styles.container}>
+                <Text style={styles.message}>We need your permission to show the camera</Text>
+                <Button onPress={requestPermission} title="grant permission" />
+            </View>
         );
     }
 
@@ -61,14 +61,14 @@ export default function Camera() {
     const pickImage = async () => {
         // No permissions request is necessary for launching the image library
         let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.All,
-        allowsEditing: true,
-        quality: 1,
-        base64: true
-    });
-    if (!result.canceled && result.assets[0].base64) {
-        queryAPI(result.assets[0].base64);
-    }
+            mediaTypes: ImagePicker.MediaTypeOptions.All,
+            allowsEditing: true,
+            quality: 1,
+            base64: true
+        });
+        if (!result.canceled && result.assets[0].base64) {
+            queryAPI(result.assets[0].base64);
+        }
     };
 
     async function queryAPI(base64: string) {
@@ -76,14 +76,14 @@ export default function Camera() {
             let res = await fetch('https://plant.id/api/v3/identification', {
                 method: 'POST',
                 headers: {
-                'Api-Key': process.env.EXPO_PUBLIC_API_KEY,
-                'Content-Type': 'application/json',
+                    'Api-Key': process.env.EXPO_PUBLIC_API_KEY,
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                images: [`data:image/jpg;base64,${base64}`],
-                latitude: 49.277,
-                longitude: -122.909,
-                similar_images: true,
+                    images: [`data:image/jpg;base64,${base64}`],
+                    latitude: 49.277,
+                    longitude: -122.909,
+                    similar_images: true,
                 }),
             });
             const jsonResponse = await res.json();
@@ -98,23 +98,23 @@ export default function Camera() {
         }
     }
 
-  return (
-    <View style={styles.container}>
-        <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
-            <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.flip_button} onPress={toggleCameraFacing}>
-                <FlipButton width={35} height={35}/>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.picture_button} onPress={takePicture}>
-                <CameraButton width={80} height={80}/>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.gallery_button} onPress={pickImage}>
-                <GalleryButton width={35} height={35}/>
-            </TouchableOpacity>
-            </View>
-        </CameraView>
-    </View>
-  );
+    return (
+        <View style={styles.container}>
+            <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity style={styles.flip_button} onPress={toggleCameraFacing}>
+                        <FlipButton width={35} height={35} />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.picture_button} onPress={takePicture}>
+                        <CameraButton width={80} height={80} />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.gallery_button} onPress={pickImage}>
+                        <GalleryButton width={35} height={35} />
+                    </TouchableOpacity>
+                </View>
+            </CameraView>
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
