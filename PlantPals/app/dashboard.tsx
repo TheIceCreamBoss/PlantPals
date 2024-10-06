@@ -20,7 +20,9 @@ const PressableBubble = ({ icon, value }) => {
 }
 
 
-
+const normalizeValue = (value, maxValue) => {
+    return Math.min(Math.max(value / maxValue, 0), 1);
+};
 export default function Dashboard() {
     const params = useLocalSearchParams<{ token?: string, plant?: string, name?: string }>();
     const [response, setResponse] = useState<any>(null); // State to store the API response
@@ -39,7 +41,14 @@ export default function Dashboard() {
         }
     }, [loaded, error]);
 
-
+    useEffect(() => {
+        if (piValues.lux || piValues.temperature || piValues.soil_moisture) {
+            const luxN = normalizeValue(piValues.lux, 1000);
+            const tempN = normalizeValue(piValues.temperature, 30);
+            const waterN = normalizeValue(piValues.soil_moisture, 3000);
+            setPiValues({ lux: luxN, soil_moisture: waterN, temperature: tempN });
+        }
+    }, [piValues]);
 
     useEffect(() => {
         async function getPiData() {
@@ -54,6 +63,8 @@ export default function Dashboard() {
             setPiValues(json)
             return json
         };
+
+
 
         async function getInfo() {
             try {
@@ -79,6 +90,8 @@ export default function Dashboard() {
         getPiData();
         getInfo();
     }, []);
+
+
     return (
         <View style={styles.container}>
             <View style={styles.content}>
@@ -89,17 +102,17 @@ export default function Dashboard() {
                 <View style={styles.barContainers}>
                     <View style={styles.barSection}>
                         <SunIcon width={40} height={40} />
-                        <Progress.Bar style={styles.barStyle} progress={0.3} width={280} height={25} color={"#FFED4B"} borderRadius={10} borderWidth={0} unfilledColor='white' />
+                        <Progress.Bar style={styles.barStyle} progress={piValues.lux} width={280} height={25} color={"#FFED4B"} borderRadius={10} borderWidth={0} unfilledColor='white' />
                         <Text>{piValues.lux}</Text>
                     </View>
                     <View style={styles.barSection}>
                         <WaterIcon width={40} height={40} />
-                        <Progress.Bar style={styles.barStyle} progress={0.8} width={280} height={25} color={"#68C0FF"} borderRadius={10} borderWidth={0} unfilledColor='white' />
+                        <Progress.Bar style={styles.barStyle} progress={piValues.soil_moisture} width={280} height={25} color={"#68C0FF"} borderRadius={10} borderWidth={0} unfilledColor='white' />
                         <Text>{piValues.soil_moisture}</Text>
                     </View>
                     <View style={styles.barSection}>
                         <TempIcon width={40} height={40} />
-                        <Progress.Bar style={styles.barStyle} progress={0.5} width={280} height={25} color={"red"} borderRadius={10} borderWidth={0} unfilledColor='white' />
+                        <Progress.Bar style={styles.barStyle} progress={piValues.temperature} width={280} height={25} color={"red"} borderRadius={10} borderWidth={0} unfilledColor='white' />
                         <Text>{piValues.temperature}</Text>
                     </View>
                 </View>
@@ -115,7 +128,7 @@ export default function Dashboard() {
                     <Text style={{ fontSize: 20, alignSelf: 'center', marginTop: 15 }}>more care info</Text>
                     <View>
                         {response && <Image style={styles.imageStyle} source={{ uri: response.input.images[0] }} />}
-                        <Text style={styles.medText}>{params.token}</Text>
+                        <Text style={styles.medText}>{params.plant}</Text>
                         <Text style={styles.paragraphText}> lorem ipsum lalalalaalla hehehehehe</Text>
 
                         <Text style={{ fontSize: 25 }}>Data</Text>
