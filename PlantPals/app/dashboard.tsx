@@ -7,6 +7,7 @@ import WaterIcon from '@/assets/images/water.svg'
 import TempIcon from '@/assets/images/temp.svg'
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useFonts } from 'expo-font';
+import { useLocalSearchParams } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 
 const PressableBubble = ({ icon, value }) => {
@@ -19,7 +20,13 @@ const PressableBubble = ({ icon, value }) => {
 }
 
 
+
 export default function Dashboard() {
+    const params = useLocalSearchParams<{ token?: string, plant?: string, name?: string }>();
+    const [response, setResponse] = useState<any>(null); // State to store the API response
+    const [date, setDate] = useState('')
+    const bottomSheetRef = useRef(null)
+    const [piValues, setPiValues] = useState({});
 
     SplashScreen.preventAutoHideAsync();
     const [loaded, error] = useFonts({
@@ -31,9 +38,7 @@ export default function Dashboard() {
             SplashScreen.hideAsync();
         }
     }, [loaded, error]);
-    const [date, setDate] = useState('')
-    const bottomSheetRef = useRef(null)
-    const [piValues, setPiValues] = useState({});
+
 
 
     useEffect(() => {
@@ -49,20 +54,38 @@ export default function Dashboard() {
             setPiValues(json)
             return json
         };
+
+        async function getInfo() {
+            try {
+                let res = await fetch(`https://plant.id/api/v3/identification/${params.token}`, {
+                    method: 'GET',
+                    headers: {
+                        'Api-Key': process.env.EXPO_PUBLIC_API_KEY,
+                        'Content-Type': 'application/json',
+                    }
+                });
+                const jsonResponse = await res.json(); // Parse response as JSON
+                setResponse(jsonResponse); // Save response to state
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
         var date = new Date().getDate();
         var month = new Date().getMonth() + 1;
         var year = new Date().getFullYear();
         var birthday = (date.toString()) + "/" + (month.toString()) + "/" + (year.toString());
         setDate(birthday);
         getPiData();
+        getInfo();
     }, []);
     return (
         <View style={styles.container}>
             <View style={styles.content}>
-                <Text style={styles.bigText}>Frank Lin's Spawn</Text>
-                <Text style={styles.medText}>Common Garden Weed</Text>
+                <Text style={styles.bigText}>{params.name}</Text>
+                <Text style={styles.medText}>{params.plant}</Text>
                 <Text style={styles.captionText}>Birthday: {date}</Text>
-                <Image style={styles.imageStyle} source={require('@/assets/images/placeholderplant.jpg')} />
+                {response && <Image style={styles.imageStyle} source={{ uri: response.input.images[0] }} />}
                 <View style={styles.barContainers}>
                     <View style={styles.barSection}>
                         <SunIcon width={40} height={40} />
@@ -91,8 +114,8 @@ export default function Dashboard() {
 
                     <Text style={{ fontSize: 20, alignSelf: 'center', marginTop: 15 }}>more care info</Text>
                     <View>
-                        <Image style={styles.imageStyle} source={require('@/assets/images/placeholderplant.jpg')} />
-                        <Text style={styles.medText}>Common Garden Weed</Text>
+                        {response && <Image style={styles.imageStyle} source={{ uri: response.input.images[0] }} />}
+                        <Text style={styles.medText}>{params.token}</Text>
                         <Text style={styles.paragraphText}> lorem ipsum lalalalaalla hehehehehe</Text>
 
                         <Text style={{ fontSize: 25 }}>Data</Text>
@@ -107,7 +130,6 @@ export default function Dashboard() {
 
                         </View>
                     </View>
-                    {/* } */}
                 </BottomSheetView>
             </BottomSheet>
         </View>
