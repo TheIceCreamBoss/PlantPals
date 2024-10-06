@@ -20,8 +20,8 @@ const PressableBubble = ({ icon, value }) => {
 }
 
 
-const normalizeValue = (value, maxValue) => {
-    return Math.min(Math.max(value / maxValue, 0), 1);
+const normalizeValue = (value, minValue, maxValue) => {
+    return (value - minValue) / (maxValue - minValue);
 };
 
 const getSunlight = (num: number) => {
@@ -33,16 +33,19 @@ const getSunlight = (num: number) => {
         return "Full"
     }
 };
-
+const normalizeValue2 = (value, maxValue) => {
+    return Math.abs((value - -4095) / (-(maxValue) - -4095))
+};
 export default function Dashboard() {
     const params = useLocalSearchParams<{ token?: string, plant?: string, name?: string }>();
     const [response, setResponse] = useState<any>(null); // State to store the API response
-    const [chatResponse, setChatResponse] = useState<any>(null); // State to store the API response
+    const [chatResponse, setChatResponse] = useState<any>({}); // State to store the API response
     const [date, setDate] = useState('')
     const bottomSheetRef = useRef(null)
     const [piValues, setPiValues] = useState({});
     const [barValues, setBarValues] = useState({})
     const [isLoading, setLoading] = useState(true)
+
 
 
     SplashScreen.preventAutoHideAsync();
@@ -61,7 +64,26 @@ export default function Dashboard() {
             const result = await getPiData();
             setPiValues({ lux: result.lux, temperature: result.temperature, soil_moisture: (-1 * result.soil_moisture) })
             if (piValues.lux || piValues.temperature || piValues.soil_moisture) {
-                const luxN = normalizeValue(piValues.lux, 0, 5000);
+                let maxLuxValue = 15000
+                let minLuxValue = 5000
+                if (chatResponse.sunlight == 2) {
+                    maxLuxValue = 5000
+                    minLuxValue = 800
+                } else if (chatResponse.sunlight == 1) {
+                    maxLuxValue = 800
+                    minLuxValue = 200
+                }
+                let maxMoist = 501
+                if (chatResponse.water == 4) {
+                    maxMoist = 1000
+                } else if (chatResponse.water == 3) {
+                    maxMoist = 2000
+                } else if (chatResponse.water == 2) {
+                    maxMoist = 1095
+                } else if (chatResponse.water == 1) {
+                    maxMoist = 3800
+                }
+                const luxN = normalizeValue(piValues.lux, minLuxValue, maxLuxValue);
                 const tempN = normalizeValue(piValues.temperature, 15, 30);
                 const waterN = normalizeValue2(piValues.soil_moisture, 1700);
                 setBarValues({ lux: luxN, soil_moisture: waterN, temperature: tempN });
@@ -71,30 +93,30 @@ export default function Dashboard() {
     }, [piValues]);
 
     function extractJsonFromString(inputString: string) {
-    // Regular expression to match content within triple backticks
-    const pattern = /```(.*?)```/s;
-    console.log(inputString);
-    
-    // Search for the pattern in the input string
-    const match = inputString.match(pattern);
-    
-    if (match) {
-        let jsonString = match[1].trim(); // Extract the JSON part and remove any extra whitespace
+        // Regular expression to match content within triple backticks
+        const pattern = /```(.*?)```/s;
+        console.log(inputString);
 
-        if (jsonString.startsWith("json")) {
-            jsonString = jsonString.substring(4).trim();
+        // Search for the pattern in the input string
+        const match = inputString.match(pattern);
+
+        if (match) {
+            let jsonString = match[1].trim(); // Extract the JSON part and remove any extra whitespace
+
+            if (jsonString.startsWith("json")) {
+                jsonString = jsonString.substring(4).trim();
+            }
+            console.log(jsonString);
+            try {
+                // Parse and return the JSON data
+                return JSON.parse(jsonString);
+            } catch (error) {
+                throw new Error("Invalid JSON format.");
+            }
+        } else {
+            throw new Error("No JSON found between triple backticks.");
         }
-        console.log(jsonString);
-        try {
-            // Parse and return the JSON data
-            return JSON.parse(jsonString);
-        } catch (error) {
-            throw new Error("Invalid JSON format.");
-        }
-    } else {
-        throw new Error("No JSON found between triple backticks.");
     }
-}
 
     async function getPiData() {
         const url = "http://192.168.125.40:4000/get";
