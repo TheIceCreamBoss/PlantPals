@@ -1,4 +1,4 @@
-import { Text, View, StyleSheet, Image } from 'react-native'
+import { Text, View, StyleSheet, Image, Pressable } from 'react-native'
 import React from 'react'
 import { useState, useEffect, useRef } from 'react'
 import * as Progress from 'react-native-progress'
@@ -6,47 +6,78 @@ import SunIcon from '@/assets/images/sunny.svg'
 import WaterIcon from '@/assets/images/water.svg'
 import TempIcon from '@/assets/images/temp.svg'
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+
+const PressableBubble = ({ icon, value }) => {
+    return (
+        <Pressable style={styles.dataBubble}>
+            {icon}
+            <Text style={{ marginTop: 5 }}>{value}</Text>
+        </Pressable>
+    )
+}
 
 
 export default function Dashboard() {
-    const [date, setDate] = useState('')
-    const [drawerState, setDrawerState] = useState(false)
-    const bottomSheetRef = useRef(null)
-    const handleSheetChanges = (index: number) => {
-        if (index == 1) {
-            setDrawerState(true);
 
-        } else {
-            setDrawerState(false);
+    SplashScreen.preventAutoHideAsync();
+    const [loaded, error] = useFonts({
+        'Mooli-Regular': require('@/assets/fonts/Mooli-Regular.ttf'),
+    });
 
-        }
-    };
     useEffect(() => {
+        if (loaded || error) {
+            SplashScreen.hideAsync();
+        }
+    }, [loaded, error]);
+    const [date, setDate] = useState('')
+    const bottomSheetRef = useRef(null)
+    const [piValues, setPiValues] = useState({});
+
+
+    useEffect(() => {
+        async function getPiData() {
+            const url = "http://192.168.125.40:4000/get";
+
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Response status: ${response.status}`);
+            }
+
+            const json = await response.json();
+            setPiValues(json)
+            return json
+        };
         var date = new Date().getDate();
         var month = new Date().getMonth() + 1;
         var year = new Date().getFullYear();
         var birthday = (date.toString()) + "/" + (month.toString()) + "/" + (year.toString());
         setDate(birthday);
+        getPiData();
     }, []);
     return (
         <View style={styles.container}>
             <View style={styles.content}>
                 <Text style={styles.bigText}>Frank Lin's Spawn</Text>
                 <Text style={styles.medText}>Common Garden Weed</Text>
-                <Text style={styles.captionText}>Birthday:{date}</Text>
+                <Text style={styles.captionText}>Birthday: {date}</Text>
                 <Image style={styles.imageStyle} source={require('@/assets/images/placeholderplant.jpg')} />
                 <View style={styles.barContainers}>
                     <View style={styles.barSection}>
                         <SunIcon width={40} height={40} />
                         <Progress.Bar style={styles.barStyle} progress={0.3} width={280} height={25} color={"#FFED4B"} borderRadius={10} borderWidth={0} unfilledColor='white' />
+                        <Text>{piValues.lux}</Text>
                     </View>
                     <View style={styles.barSection}>
                         <WaterIcon width={40} height={40} />
                         <Progress.Bar style={styles.barStyle} progress={0.8} width={280} height={25} color={"#68C0FF"} borderRadius={10} borderWidth={0} unfilledColor='white' />
+                        <Text>{piValues.soil_moisture}</Text>
                     </View>
                     <View style={styles.barSection}>
                         <TempIcon width={40} height={40} />
                         <Progress.Bar style={styles.barStyle} progress={0.5} width={280} height={25} color={"red"} borderRadius={10} borderWidth={0} unfilledColor='white' />
+                        <Text>{piValues.temperature}</Text>
                     </View>
                 </View>
             </View>
@@ -54,20 +85,32 @@ export default function Dashboard() {
                 ref={bottomSheetRef}
                 snapPoints={['10%', '85%']}
                 style={styles.bottomDrawer}
-                onChange={handleSheetChanges}
+                backgroundStyle={{ borderRadius: 50 }}
             >
                 <BottomSheetView style={styles.barContent}>
-                    {!drawerState && <Text style={{ fontSize: 20 }}>more care info</Text>}
-                    {drawerState &&
-                        <View>
-                            <Image style={styles.imageStyle} source={require('@/assets/images/placeholderplant.jpg')} />
-                            <Text style={styles.medText}>Common Garden Weed</Text>
-                            <Text> lorem ipsum lalalalaalla hehehehehe</Text>
+
+                    <Text style={{ fontSize: 20, alignSelf: 'center', marginTop: 15 }}>more care info</Text>
+                    <View>
+                        <Image style={styles.imageStyle} source={require('@/assets/images/placeholderplant.jpg')} />
+                        <Text style={styles.medText}>Common Garden Weed</Text>
+                        <Text style={styles.paragraphText}> lorem ipsum lalalalaalla hehehehehe</Text>
+
+                        <Text style={{ fontSize: 25 }}>Data</Text>
+                        <View style={styles.dataBubbles}>
+                            <PressableBubble icon={<SunIcon width={30} height={30} />} value="Bright" />
+
+                            <PressableBubble icon={<WaterIcon width={30} height={30} />} value="Moist" />
                         </View>
-                    }
+                        <View style={styles.dataBubbles}>
+                            <PressableBubble icon={<TempIcon width={30} height={30} />} value="Warm" />
+                            <PressableBubble icon={<TempIcon width={30} height={30} />} value="Warm" />
+
+                        </View>
+                    </View>
+                    {/* } */}
                 </BottomSheetView>
             </BottomSheet>
-        </View >
+        </View>
     )
 }
 
@@ -123,7 +166,6 @@ const styles = StyleSheet.create({
     barContent: {
         width: '80%',
         alignSelf: 'center',
-        backgroundColor: 'red'
     },
     drawerMedText: {
         padding: 10,
@@ -131,6 +173,24 @@ const styles = StyleSheet.create({
         alignSelf: 'center'
     },
     paragraphText: {
-
+        margin: 20,
+        marginBottom: 100,
+        fontSize: 15
+    },
+    dataBubbles: {
+        flexDirection: "row",
+        width: "100%",
+        paddingTop: 10
+    },
+    dataBubble: {
+        flexDirection: 'row',
+        paddingTop: 10,
+        paddingBottom: 10,
+        paddingLeft: 50,
+        paddingRight: 50,
+        borderRadius: 20,
+        marginRight: 10,
+        borderColor: "lightgray",
+        borderWidth: 2
     }
 })
