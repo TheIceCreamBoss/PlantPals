@@ -5,6 +5,7 @@ import * as Progress from 'react-native-progress'
 import SunIcon from '@/assets/images/sunny.svg'
 import WaterIcon from '@/assets/images/water.svg'
 import TempIcon from '@/assets/images/temp.svg'
+import DiffIcon from '@/assets/images/plant-svgrepo-com.svg'
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useFonts } from 'expo-font';
 import { useLocalSearchParams } from 'expo-router';
@@ -14,7 +15,7 @@ const PressableBubble = ({ icon, value }) => {
     return (
         <Pressable style={styles.dataBubble}>
             {icon}
-            <Text style={{ marginTop: 5 }}>{value}</Text>
+            <Text style={{ marginTop: 5, fontFamily: "Mooli-Regular" }}>{value}</Text>
         </Pressable>
     )
 }
@@ -26,11 +27,35 @@ const normalizeValue = (value, minValue, maxValue) => {
 
 const getSunlight = (num: number) => {
     if (num === 1) {
-        return "None";
+        return " None ";
     } else if (num === 2) {
-        return "Indirect";
+        return " Indirect ";
     } else {
-        return "Full"
+        return " Full "
+    }
+};
+
+const getMoist = (num: number) => {
+    if (num === 1) {
+        return " 1/5 ";
+    } else if (num === 2) {
+        return " 2/5 ";
+    } else if (num === 3) {
+        return " 3/5 ";
+    } else if (num === 4) {
+        return " 4/5 ";
+    } else {
+        return " 5/5 "
+    }
+};
+
+const getDifficulty = (num: number) => {
+    if (num === 1) {
+        return "Easy";
+    } else if (num === 2) {
+        return "Medium";
+    } else {
+        return "Hard"
     }
 };
 const normalizeValue2 = (value, maxValue) => {
@@ -158,7 +183,7 @@ export default function Dashboard() {
                     question: `For the plant ${params.plant}, give me: \n
                             sunlight: recommended sunlight range from 1 to 3, where 1 is no sunlight, 2 is indirect sunlight, and 3 is high sunlight, \n
                             water: recommended water range from 1 to 5, where 1 is low amounts of water required and 5 is high amount of water required, \n
-                            temperature: recommended temperature range in celsius, add °C at the end" \n
+                            temperature: recommended temperature range in celsius, add °C at the end, \n
                             difficulty: difficulty to take of the plant in the range from 1 to 3, \n
                             description: a short text description max 200 characters of the plant`,
                     prompt: "Give data in json form, for the 5 parameters: sunlight, water, temperature, difficulty, description",
@@ -166,12 +191,14 @@ export default function Dashboard() {
                 }),
             });
             try {
+                console.log(res)
                 const jsonResponse = await res.json(); // Parse response as JSON
+
                 console.log(jsonResponse.messages[jsonResponse.messages.length - 1].content);
-                setChatResponse(JSON.stringify(extractJsonFromString(jsonResponse.messages[jsonResponse.messages.length - 1].content))); // Save response to state
-                console.log(chatResponse);
+                setChatResponse(extractJsonFromString(jsonResponse.messages[jsonResponse.messages.length - 1].content)); // Save response to state
+                console.log(chatResponse.description);
             } catch (err) {
-                console.log("invalid json");
+                console.log(err);
             }
         } catch (error) {
             console.error(error);
@@ -236,21 +263,21 @@ export default function Dashboard() {
                 >
                     <BottomSheetView style={styles.barContent}>
 
-                        <Text style={{ fontSize: 20, alignSelf: 'center', marginTop: 15 }}>more care info</Text>
+                        <Text style={{ fontSize: 20, alignSelf: 'center', marginTop: 15, fontFamily: "Mooli-Regular" }}>more care info</Text>
                         <View>
                             {response && <Image style={styles.imageStyle} source={{ uri: response.input.images[0] }} />}
                             <Text style={styles.medText}>{params.plant}</Text>
-                            <Text style={styles.paragraphText}> lorem ipsum lalalalaalla hehehehehe</Text>
+                            <Text style={styles.paragraphText}>{chatResponse.description}</Text>
 
                             <Text style={{ fontSize: 25 }}>Data</Text>
                             <View style={styles.dataBubbles}>
                                 <PressableBubble icon={<SunIcon width={30} height={30} />} value={getSunlight(chatResponse.sunlight)} />
 
-                                <PressableBubble icon={<WaterIcon width={30} height={30} />} value="Moist" />
+                                <PressableBubble icon={<WaterIcon width={30} height={30} />} value={getMoist(chatResponse.water)} />
                             </View>
                             <View style={styles.dataBubbles}>
-                                <PressableBubble icon={<TempIcon width={30} height={30} />} value="Warm" />
-                                <PressableBubble icon={<TempIcon width={30} height={30} />} value="Warm" />
+                                <PressableBubble icon={<TempIcon width={30} height={30} />} value={chatResponse.temperature} />
+                                <PressableBubble icon={<DiffIcon width={30} height={30} />} value={getDifficulty(chatResponse.difficulty)} />
 
                             </View>
                         </View>
@@ -281,12 +308,15 @@ const styles = StyleSheet.create({
     medText: {
         padding: 10,
         fontSize: 20,
-        alignSelf: 'center'
+        alignSelf: 'center',
+        fontFamily: "Mooli-Regular"
+
     },
     captionText: {
         fontSize: 20,
         alignSelf: 'center',
-        color: "#7A7A7A"
+        color: "#7A7A7A",
+        fontFamily: "Mooli-Regular"
     },
     imageStyle: {
         marginTop: 25,
@@ -322,20 +352,22 @@ const styles = StyleSheet.create({
     },
     paragraphText: {
         margin: 20,
-        marginBottom: 100,
-        fontSize: 15
+        marginBottom: 20,
+        fontSize: 15,
+        fontFamily: "Mooli-Regular"
     },
     dataBubbles: {
         flexDirection: "row",
         width: "100%",
         paddingTop: 10
+
     },
     dataBubble: {
         flexDirection: 'row',
         paddingTop: 10,
         paddingBottom: 10,
-        paddingLeft: 50,
-        paddingRight: 50,
+        paddingLeft: 37,
+        paddingRight: 37,
         borderRadius: 20,
         marginRight: 10,
         borderColor: "lightgray",
