@@ -1,5 +1,5 @@
-from flask import Flask, request, make_response, jsonify
-from temperature_sensor import get_temp
+from flask import Flask, request, jsonify
+#from temperature_sensor import get_temp
 
 app = Flask(__name__)
 soil_moisture = None
