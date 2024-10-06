@@ -45,7 +45,7 @@
       [
         "expo-font",
         {
-          "fonts": ["PlantPals/assets/fonts/Mooli-Regular.ttf"]
+          "fonts": ["./assets/fonts/Mooli-Regular.ttf"]
         }
       ]
       
