@@ -18,28 +18,26 @@ const PressableBubble = ({ icon, value }) => {
         </Pressable>
     )
 }
-async function getPiData() {
-    const url = "http://192.168.125.40:4000/get";
 
-    const response = await fetch(url);
-    if (!response.ok) {
-        throw new Error(`Response status: ${response.status}`);
+
+const normalizeValue = (value, maxValue) => {
+    return Math.min(Math.max(value / maxValue, 0), 1);
+};
+
+const getSunlight = (num: number) => {
+    if (num === 1) {
+        return "None";
+    } else if (num === 2) {
+        return "Indirect";
+    } else {
+        return "Full"
     }
-
-    const json = await response.json();
-    return json
 };
 
-const normalizeValue = (value, minValue, maxValue) => {
-    return (value - minValue) / (maxValue - minValue);
-};
-
-const normalizeValue2 = (value, maxValue) => {
-    return Math.abs((value - -4095) / (-(maxValue) - -4095))
-};
 export default function Dashboard() {
     const params = useLocalSearchParams<{ token?: string, plant?: string, name?: string }>();
     const [response, setResponse] = useState<any>(null); // State to store the API response
+    const [chatResponse, setChatResponse] = useState<any>(null); // State to store the API response
     const [date, setDate] = useState('')
     const bottomSheetRef = useRef(null)
     const [piValues, setPiValues] = useState({});
@@ -72,23 +70,95 @@ export default function Dashboard() {
         return () => clearInterval(interval);
     }, [piValues]);
 
-    useEffect(() => {
-        async function getInfo() {
-            try {
-                let res = await fetch(`https://plant.id/api/v3/identification/${params.token}`, {
-                    method: 'GET',
-                    headers: {
-                        'Api-Key': process.env.EXPO_PUBLIC_API_KEY,
-                        'Content-Type': 'application/json',
-                    }
-                });
-                const jsonResponse = await res.json(); // Parse response as JSON
-                setResponse(jsonResponse); // Save response to state
-            } catch (error) {
-                console.error(error);
-            }
+    function extractJsonFromString(inputString: string) {
+    // Regular expression to match content within triple backticks
+    const pattern = /```(.*?)```/s;
+    console.log(inputString);
+    
+    // Search for the pattern in the input string
+    const match = inputString.match(pattern);
+    
+    if (match) {
+        let jsonString = match[1].trim(); // Extract the JSON part and remove any extra whitespace
+
+        if (jsonString.startsWith("json")) {
+            jsonString = jsonString.substring(4).trim();
+        }
+        console.log(jsonString);
+        try {
+            // Parse and return the JSON data
+            return JSON.parse(jsonString);
+        } catch (error) {
+            throw new Error("Invalid JSON format.");
+        }
+    } else {
+        throw new Error("No JSON found between triple backticks.");
+    }
+}
+
+    async function getPiData() {
+        const url = "http://192.168.125.40:4000/get";
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`);
         }
 
+        const json = await response.json();
+        setPiValues(json)
+        return json
+    };
+    async function getInfo() {
+        try {
+            let res = await fetch(`https://plant.id/api/v3/identification/${params.token}`, {
+                method: 'GET',
+                headers: {
+                    'Api-Key': process.env.EXPO_PUBLIC_API_KEY,
+                    'Content-Type': 'application/json',
+                }
+            });
+            const jsonResponse = await res.json(); // Parse response as JSON
+            setResponse(jsonResponse); // Save response to state
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    async function getChatInfo() {
+        try {
+            let res = await fetch(`https://plant.id/api/v3/identification/${params.token}/conversation`, {
+                method: 'POST',
+                headers: {
+                    'Api-Key': process.env.EXPO_PUBLIC_API_KEY,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    question: `For the plant ${params.plant}, give me: \n
+                            sunlight: recommended sunlight range from 1 to 3, where 1 is no sunlight, 2 is indirect sunlight, and 3 is high sunlight, \n
+                            water: recommended water range from 1 to 5, where 1 is low amounts of water required and 5 is high amount of water required, \n
+                            temperature: recommended temperature range in celsius, add °C at the end" \n
+                            difficulty: difficulty to take of the plant in the range from 1 to 3, \n
+                            description: a short text description max 200 characters of the plant`,
+                    prompt: "Give data in json form, for the 5 parameters: sunlight, water, temperature, difficulty, description",
+                    temperature: 0.1,
+                }),
+            });
+            try {
+                const jsonResponse = await res.json(); // Parse response as JSON
+                console.log(jsonResponse.messages[jsonResponse.messages.length - 1].content);
+                setChatResponse(JSON.stringify(extractJsonFromString(jsonResponse.messages[jsonResponse.messages.length - 1].content))); // Save response to state
+                console.log(chatResponse);
+            } catch (err) {
+                console.log("invalid json");
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    //console.log(chatResponse);
+
+    useEffect(() => {
         var date = new Date().getDate();
         var month = new Date().getMonth() + 1;
         var year = new Date().getFullYear();
@@ -97,6 +167,7 @@ export default function Dashboard() {
         const result = getPiData();
         setPiValues({ lux: result.lux, temperature: result.temperature, soil_moisture: result.soil_moisutre })
         getInfo();
+        getChatInfo();
         setLoading(false);
     }, []);
 
@@ -151,7 +222,7 @@ export default function Dashboard() {
 
                             <Text style={{ fontSize: 25 }}>Data</Text>
                             <View style={styles.dataBubbles}>
-                                <PressableBubble icon={<SunIcon width={30} height={30} />} value="Bright" />
+                                <PressableBubble icon={<SunIcon width={30} height={30} />} value={getSunlight(chatResponse.sunlight)} />
 
                                 <PressableBubble icon={<WaterIcon width={30} height={30} />} value="Moist" />
                             </View>
@@ -182,7 +253,8 @@ const styles = StyleSheet.create({
     },
     bigText: {
         fontSize: 30,
-        alignSelf: 'center'
+        alignSelf: 'center',
+        fontFamily: 'Mooli-Regular'
     },
     medText: {
         padding: 10,

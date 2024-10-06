@@ -34,7 +34,7 @@ export default function Index() {
         </View>
         <Pressable style={styles.buttonStyle} onPress={() => {
           // router.push('/camera')
-          router.push("/api?token=DqjeBDTc44Y1Xmp")
+          router.push("/api?token=gWkJd5BMXBtyDMc")
         }}>
           <Text style={styles.buttonText}>Add Your Plant</Text>
         </Pressable>
