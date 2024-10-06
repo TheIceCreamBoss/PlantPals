@@ -12,7 +12,10 @@ export default function Index() {
           <Text style={styles.textStyle}>Track Your Plant!</Text>
           <Text style={styles.textStyleSmaller}>Step into a new world of botany!</Text>
         </View>
-        <Pressable style={styles.buttonStyle} onPress={()=>{router.push('/camera')}}>
+        <Pressable style={styles.buttonStyle} onPress={()=>{
+          // router.push('/camera')
+          router.push("/api?token=gWkJd5BMXBtyDMc")
+        }}>
           <Text style={styles.buttonText}>Add Your Plant</Text>
         </Pressable>
       </View>
