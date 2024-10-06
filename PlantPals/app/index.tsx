@@ -1,6 +1,7 @@
 import { Text, View, StyleSheet, Pressable } from "react-native";
-import { router } from 'expo-router';
+import { router,Link } from 'expo-router';
 import HomePlant from '@/assets/images/homeplant.svg'
+import React from "react";
 export default function Index() {
   return (
     <View style={styles.background}>
@@ -15,6 +16,7 @@ export default function Index() {
         <Pressable style={styles.buttonStyle} onPress={()=>{router.push('/camera')}}>
           <Text style={styles.buttonText}>Add Your Plant</Text>
         </Pressable>
+        <Link href='./dashboard'>Dashboard</Link>
       </View>
     </View>
   );

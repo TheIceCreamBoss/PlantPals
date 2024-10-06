@@ -3,13 +3,13 @@ import { useState, useRef } from 'react';
 import { Button, StyleSheet, Text, TouchableOpacity, View, } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import React from 'react';
 
 export default function Camera() {
     const [facing, setFacing] = useState<CameraType>('back');
     const [permission, requestPermission] = useCameraPermissions();
     const cameraRef = useRef(null);
     const { uri } = useLocalSearchParams<{ uri?: string }>();
-    const fileSystem = 
 
     if (!permission) {
         return <View/>;
