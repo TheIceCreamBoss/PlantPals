@@ -183,7 +183,7 @@ export default function Dashboard() {
                     question: `For the plant ${params.plant}, give me: \n
                             sunlight: recommended sunlight range from 1 to 3, where 1 is no sunlight, 2 is indirect sunlight, and 3 is high sunlight, \n
                             water: recommended water range from 1 to 5, where 1 is low amounts of water required and 5 is high amount of water required, \n
-                            temperature: recommended temperature range in celsius, add °C at the end, \n
+                            temperature: recommended temperature range in celsius, add °C at the end, make sure that the format of the string is "{lowerValue}-{higherValue}°C" \n
                             difficulty: difficulty to take of the plant in the range from 1 to 3, \n
                             description: a short text description max 200 characters of the plant`,
                     prompt: "Give data in json form, for the 5 parameters: sunlight, water, temperature, difficulty, description",
@@ -241,17 +241,14 @@ export default function Dashboard() {
                         <View style={styles.barSection}>
                             <SunIcon width={40} height={40} />
                             <Progress.Bar style={styles.barStyle} progress={barValues.lux} width={280} height={25} color={"#FFED4B"} borderRadius={10} borderWidth={0} unfilledColor='white' />
-                            <Text>{piValues.lux}</Text>
                         </View>
                         <View style={styles.barSection}>
                             <WaterIcon width={40} height={40} />
                             <Progress.Bar style={styles.barStyle} progress={barValues.soil_moisture} width={280} height={25} color={"#68C0FF"} borderRadius={10} borderWidth={0} unfilledColor='white' />
-                            <Text>{piValues.soil_moisture}</Text>
                         </View>
                         <View style={styles.barSection}>
                             <TempIcon width={40} height={40} />
                             <Progress.Bar style={styles.barStyle} progress={barValues.temperature} width={280} height={25} color={"red"} borderRadius={10} borderWidth={0} unfilledColor='white' />
-                            <Text>{piValues.temperature}</Text>
                         </View>
                     </View>
                 </View>

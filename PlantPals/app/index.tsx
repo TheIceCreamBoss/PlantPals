@@ -38,7 +38,6 @@ export default function Index() {
         }}>
           <Text style={styles.buttonText}>Add Your Plant</Text>
         </Pressable>
-        <Link href='./dashboard'>Dashboard</Link>
       </View>
     </View>
   );
