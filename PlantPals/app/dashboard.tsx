@@ -29,6 +29,7 @@ export default function Dashboard() {
     const [date, setDate] = useState('')
     const bottomSheetRef = useRef(null)
     const [piValues, setPiValues] = useState({});
+    const [isLoading, setLoading] = useState(true)
 
     SplashScreen.preventAutoHideAsync();
     const [loaded, error] = useFonts({
@@ -48,7 +49,7 @@ export default function Dashboard() {
             const waterN = normalizeValue(piValues.soil_moisture, 3000);
             setPiValues({ lux: luxN, soil_moisture: waterN, temperature: tempN });
         }
-    }, [piValues]);
+    }, []);
 
     useEffect(() => {
         async function getPiData() {
@@ -89,64 +90,75 @@ export default function Dashboard() {
         setDate(birthday);
         getPiData();
         getInfo();
+        setLoading(false);
     }, []);
 
+    if (isLoading) {
+        return (
+            <View style={styles.container}>
+                <View style={styles.content}>
+                    <Text>Loading...</Text>
 
-    return (
-        <View style={styles.container}>
-            <View style={styles.content}>
-                <Text style={styles.bigText}>{params.name}</Text>
-                <Text style={styles.medText}>{params.plant}</Text>
-                <Text style={styles.captionText}>Birthday: {date}</Text>
-                {response && <Image style={styles.imageStyle} source={{ uri: response.input.images[0] }} />}
-                <View style={styles.barContainers}>
-                    <View style={styles.barSection}>
-                        <SunIcon width={40} height={40} />
-                        <Progress.Bar style={styles.barStyle} progress={piValues.lux} width={280} height={25} color={"#FFED4B"} borderRadius={10} borderWidth={0} unfilledColor='white' />
-                        <Text>{piValues.lux}</Text>
-                    </View>
-                    <View style={styles.barSection}>
-                        <WaterIcon width={40} height={40} />
-                        <Progress.Bar style={styles.barStyle} progress={piValues.soil_moisture} width={280} height={25} color={"#68C0FF"} borderRadius={10} borderWidth={0} unfilledColor='white' />
-                        <Text>{piValues.soil_moisture}</Text>
-                    </View>
-                    <View style={styles.barSection}>
-                        <TempIcon width={40} height={40} />
-                        <Progress.Bar style={styles.barStyle} progress={piValues.temperature} width={280} height={25} color={"red"} borderRadius={10} borderWidth={0} unfilledColor='white' />
-                        <Text>{piValues.temperature}</Text>
-                    </View>
                 </View>
             </View>
-            <BottomSheet
-                ref={bottomSheetRef}
-                snapPoints={['10%', '85%']}
-                style={styles.bottomDrawer}
-                backgroundStyle={{ borderRadius: 50 }}
-            >
-                <BottomSheetView style={styles.barContent}>
-
-                    <Text style={{ fontSize: 20, alignSelf: 'center', marginTop: 15 }}>more care info</Text>
-                    <View>
-                        {response && <Image style={styles.imageStyle} source={{ uri: response.input.images[0] }} />}
-                        <Text style={styles.medText}>{params.plant}</Text>
-                        <Text style={styles.paragraphText}> lorem ipsum lalalalaalla hehehehehe</Text>
-
-                        <Text style={{ fontSize: 25 }}>Data</Text>
-                        <View style={styles.dataBubbles}>
-                            <PressableBubble icon={<SunIcon width={30} height={30} />} value="Bright" />
-
-                            <PressableBubble icon={<WaterIcon width={30} height={30} />} value="Moist" />
+        )
+    } else {
+        return (
+            <View style={styles.container}>
+                <View style={styles.content}>
+                    <Text style={styles.bigText}>{params.name}</Text>
+                    <Text style={styles.medText}>{params.plant}</Text>
+                    <Text style={styles.captionText}>Birthday: {date}</Text>
+                    {response && <Image style={styles.imageStyle} source={{ uri: response.input.images[0] }} />}
+                    <View style={styles.barContainers}>
+                        <View style={styles.barSection}>
+                            <SunIcon width={40} height={40} />
+                            <Progress.Bar style={styles.barStyle} progress={piValues.lux} width={280} height={25} color={"#FFED4B"} borderRadius={10} borderWidth={0} unfilledColor='white' />
+                            <Text>{piValues.lux}</Text>
                         </View>
-                        <View style={styles.dataBubbles}>
-                            <PressableBubble icon={<TempIcon width={30} height={30} />} value="Warm" />
-                            <PressableBubble icon={<TempIcon width={30} height={30} />} value="Warm" />
-
+                        <View style={styles.barSection}>
+                            <WaterIcon width={40} height={40} />
+                            <Progress.Bar style={styles.barStyle} progress={piValues.soil_moisture} width={280} height={25} color={"#68C0FF"} borderRadius={10} borderWidth={0} unfilledColor='white' />
+                            <Text>{piValues.soil_moisture}</Text>
+                        </View>
+                        <View style={styles.barSection}>
+                            <TempIcon width={40} height={40} />
+                            <Progress.Bar style={styles.barStyle} progress={piValues.temperature} width={280} height={25} color={"red"} borderRadius={10} borderWidth={0} unfilledColor='white' />
+                            <Text>{piValues.temperature}</Text>
                         </View>
                     </View>
-                </BottomSheetView>
-            </BottomSheet>
-        </View>
-    )
+                </View>
+                <BottomSheet
+                    ref={bottomSheetRef}
+                    snapPoints={['10%', '85%']}
+                    style={styles.bottomDrawer}
+                    backgroundStyle={{ borderRadius: 50 }}
+                >
+                    <BottomSheetView style={styles.barContent}>
+
+                        <Text style={{ fontSize: 20, alignSelf: 'center', marginTop: 15 }}>more care info</Text>
+                        <View>
+                            {response && <Image style={styles.imageStyle} source={{ uri: response.input.images[0] }} />}
+                            <Text style={styles.medText}>{params.plant}</Text>
+                            <Text style={styles.paragraphText}> lorem ipsum lalalalaalla hehehehehe</Text>
+
+                            <Text style={{ fontSize: 25 }}>Data</Text>
+                            <View style={styles.dataBubbles}>
+                                <PressableBubble icon={<SunIcon width={30} height={30} />} value="Bright" />
+
+                                <PressableBubble icon={<WaterIcon width={30} height={30} />} value="Moist" />
+                            </View>
+                            <View style={styles.dataBubbles}>
+                                <PressableBubble icon={<TempIcon width={30} height={30} />} value="Warm" />
+                                <PressableBubble icon={<TempIcon width={30} height={30} />} value="Warm" />
+
+                            </View>
+                        </View>
+                    </BottomSheetView>
+                </BottomSheet>
+            </View>
+        )
+    }
 }
 
 const styles = StyleSheet.create({
